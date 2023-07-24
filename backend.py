@@ -15,6 +15,13 @@ from pydantic import BaseModel
 
 from hppnet.hppnet_onnx import HPPNetNumpyDecoder,HPPNetOnnx
 
+# Configs:
+port = 8612
+
+# This is the test function used in development
+cqt_backend = 'librosa' #librosa or nnAudio(need cqt onnx patch)
+cqt_onnx_path = ''
+
 class HppnetInferTask(BaseModel):
     file_path:Union[str, None] = None
     model_name:str
@@ -26,6 +33,8 @@ class HppnetInferTask(BaseModel):
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="./webui/static"), name="static")
 app.mount("/assets", StaticFiles(directory="./webui/assets"), name="assets")
+
+# For node dev
 origins = [
     "http://localhost:3000",
 ]
@@ -56,9 +65,11 @@ def init_hppnet_onnx(onset_onnx,frame_onnx,device,gpu_id):
     global hppnet_onnx
     if device=='gpu':
             provider_options = [{'device_id': gpu_id}] if gpu_id else None
-            hppnet_onnx = HPPNetOnnx(onset_onnx,frame_onnx,provider_options=provider_options)
+            hppnet_onnx = HPPNetOnnx(onset_onnx,frame_onnx,provider_options=provider_options,
+                                     cqt_backend=cqt_backend,cqt_onnx_path=cqt_onnx_path)
     else:
-        hppnet_onnx = HPPNetOnnx(onset_onnx,frame_onnx,providers=['CPUExecutionProvider'])
+        hppnet_onnx = HPPNetOnnx(onset_onnx,frame_onnx,providers=['CPUExecutionProvider'],
+                                 cqt_backend=cqt_backend,cqt_onnx_path=cqt_onnx_path)
 
 @app.get('/hppnet_models')        
 def get_available_hppnet_models():
@@ -110,7 +121,7 @@ def open_browser(port):
     webbrowser.open(f'http://127.0.0.1:{port}/')
 
 if __name__ == "__main__":
-    port = 8612
+
     t1 = Thread(target=run_server, args=[port])
     t2 = Thread(target=open_browser, args=[port])
 
@@ -118,4 +129,4 @@ if __name__ == "__main__":
     t2.start()
 
     t1.join()
-    t2.join()
+    # t2.join()

@@ -190,3 +190,4 @@ yarn-error.log*
 /backend_temp
 /webui
 /hppnet/models
+nnAudioCQT.onnx

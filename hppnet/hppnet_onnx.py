@@ -7,7 +7,9 @@ from mido import Message, MidiFile, MidiTrack
 
 
 class HPPNetOnnx:
-    def __init__(self, onset_onnx_path=None, frame_onnx_path=None, model_type='sp',providers= ['DmlExecutionProvider'],provider_options=None):
+    def __init__(self, onset_onnx_path=None, frame_onnx_path=None, model_type='sp'
+                 ,providers= ['DmlExecutionProvider'],provider_options=None,
+                 cqt_backend='librosa',cqt_onnx_path=None):
         """This class is mainly written for hppnet sp, 
         where the model constants are fixed in the following code.
         Except for the sp model, the inference results of the subnet need to be processed further on your own. 
@@ -15,6 +17,7 @@ class HPPNetOnnx:
             model_type(str):sp,base,tiny,ultra_tiny
             providers:eg. ['DmlExecutionProvider']/['CPUExecutionProvider']
             provider_options: eg. [{'device_id': 0}]
+            cqt_backend:'librosa','nnAudio'
         """
         self.onset_onnx_path = onset_onnx_path
         self.frame_onnx_path = frame_onnx_path
@@ -22,6 +25,8 @@ class HPPNetOnnx:
         self.model_type = model_type
         self.providers = providers
         self.provider_options = provider_options
+        self.cqt_backend = cqt_backend
+        self.cqt_onnx_path = cqt_onnx_path
 
     def load_model(self):
         self.onset_sess = onnxruntime.InferenceSession(
@@ -29,6 +34,9 @@ class HPPNetOnnx:
         if self.frame_onnx_path:
             self.frame_sess = onnxruntime.InferenceSession(
                 self.frame_onnx_path, providers=self.providers, provider_options=self.provider_options)
+        if self.cqt_backend == 'nnAudio':
+            self.cqt_sess = onnxruntime.InferenceSession(
+            self.cqt_onnx_path, providers=self.providers, provider_options=self.provider_options)
 
     def to_cqt(self, audio):
         """audio to cqt db
@@ -39,12 +47,19 @@ class HPPNetOnnx:
         Returns:
             cqt_db (np.ndarray): (1, T, 352)
         """
-        e = 2**(1/24)
-        cqt = np.abs(librosa.cqt(audio, sr=16000, hop_length=320, fmin=27.5/e, n_bins=88*4, bins_per_octave=4*12,
-                                 window='hann', pad_mode='reflect'))
-        cqt_db = librosa.power_to_db(cqt)
-        cqt_db = np.transpose(cqt_db, (0, 2, 1))
-        return cqt_db
+        if self.cqt_backend=='librosa':
+            e = 2**(1/24)
+            cqt = np.abs(librosa.cqt(audio, sr=16000, hop_length=320, fmin=27.5/e, n_bins=88*4, bins_per_octave=4*12,
+                                    window='hann', pad_mode='reflect'))
+            cqt_db = librosa.power_to_db(cqt)
+            cqt_db = np.transpose(cqt_db, (0, 2, 1))
+            return cqt_db
+        elif self.cqt_backend=='nnAudio':
+            input_name = self.cqt_sess.get_inputs()[0].name
+            output_name = self.cqt_sess.get_outputs()[0].name
+            output = self.cqt_sess.run([output_name], {input_name: audio})
+            return output[0]
+    
 
     def forward_cqt(self, cqt_db):
         """subnet infer
