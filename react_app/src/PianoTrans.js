@@ -16,8 +16,8 @@ import { useRef, useEffect, useState } from 'react';
 import Slider from '@mui/material/Slider';
 import MuiInput from '@mui/material/Input';
 
-const backendUrl = 'http://127.0.0.1:8000/';
-// const backendUrl = '';
+// const backendUrl = 'http://127.0.0.1:8000/';
+const backendUrl = '';
 
 function InferAlert(props) {
     //props.inferState:finish|backendError|none|missingParam

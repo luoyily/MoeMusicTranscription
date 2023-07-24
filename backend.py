@@ -1,5 +1,9 @@
 import os
 from typing import Union
+import webbrowser
+from threading import Thread
+import time
+
 import uvicorn
 from fastapi import FastAPI,UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,7 +21,7 @@ class HppnetInferTask(BaseModel):
     device:str
     onset_t:float
     frame_t:float
-    gpu_id:Union[str, None] = None
+    gpu_id:Union[int, None] = None
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="./webui/static"), name="static")
@@ -98,5 +102,20 @@ async def create_upload_file(file: UploadFile):
     return {"filename": file.filename}
 
 
+def run_server(port):
+    uvicorn.run(app, host="0.0.0.0", port=port)
+
+def open_browser(port):
+    time.sleep(3)
+    webbrowser.open(f'http://127.0.0.1:{port}/')
+
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = 8612
+    t1 = Thread(target=run_server, args=[port])
+    t2 = Thread(target=open_browser, args=[port])
+
+    t1.start()
+    t2.start()
+
+    t1.join()
+    t2.join()

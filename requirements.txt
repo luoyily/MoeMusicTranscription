@@ -1,0 +1,6 @@
+fastapi
+"uvicorn[standard]"
+onnxruntime-directml
+librosa
+mido
+python-multipart
