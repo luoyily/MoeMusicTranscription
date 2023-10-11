@@ -191,3 +191,7 @@ yarn-error.log*
 /webui
 /hppnet/models
 nnAudioCQT.onnx
+
+data_example
+runs
+ckpt

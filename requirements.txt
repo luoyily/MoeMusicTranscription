@@ -4,3 +4,15 @@ onnxruntime-directml
 librosa
 mido
 python-multipart
+
+soundfile==0.11.0
+# pytorch 请手动安装
+# torch==1.13.1
+# torchaudio==0.13.1
+# torchvision
+tqdm
+h5py
+mir-eval==0.7
+matplotlib
+pandas
+sacred==0.8.4

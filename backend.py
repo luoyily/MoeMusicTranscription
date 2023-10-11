@@ -1,19 +1,16 @@
 import os
 from typing import Union
-import webbrowser
-from threading import Thread
-import time
+
 
 import uvicorn
 from fastapi import FastAPI,UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+
 
 from pydantic import BaseModel
 
-from hppnet.hppnet_onnx import HPPNetNumpyDecoder,HPPNetOnnx
+from hppnet_deploy.hppnet_onnx import HPPNetNumpyDecoder,HPPNetOnnx
 
 # Configs:
 port = 8612
@@ -31,8 +28,6 @@ class HppnetInferTask(BaseModel):
     gpu_id:Union[int, None] = None
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="./webui/static"), name="static")
-app.mount("/assets", StaticFiles(directory="./webui/assets"), name="assets")
 
 # For node dev
 origins = [
@@ -51,11 +46,6 @@ hppnet_onnx = None # type: HPPNetOnnx
 hppnet_onnx_state = {}
 hppnet_decoder = HPPNetNumpyDecoder()
 
-@app.get("/")
-def root():
-    with open('./webui/index.html','r',encoding='utf-8') as f:
-        html_content = f.read()
-        return HTMLResponse(content=html_content, status_code=200)
 
 def check_hppnet_onnx_state_change(model_name,device,gpu_id):
     new_state = {"model":model_name,"device":device,"gpu_id":gpu_id}
@@ -116,17 +106,6 @@ async def create_upload_file(file: UploadFile):
 def run_server(port):
     uvicorn.run(app, host="0.0.0.0", port=port)
 
-def open_browser(port):
-    time.sleep(3)
-    webbrowser.open(f'http://127.0.0.1:{port}/')
 
 if __name__ == "__main__":
-
-    t1 = Thread(target=run_server, args=[port])
-    t2 = Thread(target=open_browser, args=[port])
-
-    t1.start()
-    t2.start()
-
-    t1.join()
-    # t2.join()
+    run_server(port)
