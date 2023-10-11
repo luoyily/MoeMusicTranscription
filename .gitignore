@@ -191,3 +191,6 @@ yarn-error.log*
 /webui
 /hppnet/models
 nnAudioCQT.onnx
+test.py
+test.ipynb
+/test_audio
